@@ -1,6 +1,7 @@
 --========================================================
--- BIGFROOT THAI - ZIGZAG V2.3 MERGED
--- Working V2 Engine + V2.1 + V2.2 + Latest translations
+-- BIGFROOT THAI - ZIGZAG V2.4 MERGED
+-- Working V2 Engine + V2.3 + Enchanted Update
+-- BF v1.7.9
 --========================================================
 
 local Players=game:GetService("Players")
@@ -492,6 +493,73 @@ local T={
 "รายได้ขั้นต่ำของชาร์ด $/วิ (0 = ไม่จำกัด)",
 
 ["Shards"]="ชาร์ด",
+
+
+--========================================================
+-- BF V1.7.9 - ENCHANTED UPDATE
+--========================================================
+
+["Enchanted"]="มนตรา",
+
+["Wisp"]="วิสป์",
+
+["Auto Wisp Quests"]=
+"ออโต้ทำเควสต์ Wisp",
+
+["Steal Wisp Quest Eggs"]=
+"ขโมยไข่เควสต์ Wisp",
+
+["Butterflies"]="ผีเสื้อ",
+
+["Auto Claim Net"]=
+"ออโต้รับตาข่าย",
+
+["Auto Catch Butterflies"]=
+"ออโต้จับผีเสื้อ",
+
+["Bloom"]="ดอกไม้บาน",
+
+["Essence"]="เอสเซนส์",
+
+["Auto Essence"]=
+"ออโต้เอสเซนส์",
+
+["Auto Trade Up"]=
+"ออโต้แลกอัปเกรด",
+
+["Trades"]="รายการแลก",
+
+["Trade Up"]="แลกอัปเกรด",
+
+["Green"]="เขียว",
+["Blue"]="น้ำเงิน",
+["Purple"]="ม่วง",
+["Gold"]="ทอง",
+["Golden"]="ทอง",
+
+["Green -> Blue"]=
+"เขียว → น้ำเงิน",
+
+["Blue -> Purple"]=
+"น้ำเงิน → ม่วง",
+
+["Purple -> Golden"]=
+"ม่วง → ทอง",
+
+["Purple -> Gold"]=
+"ม่วง → ทอง",
+
+["Green -> Blue, Blue -> Purple, Purple -> Golden"]=
+"เขียว → น้ำเงิน, น้ำเงิน → ม่วง, ม่วง → ทอง",
+
+["Green -> Blue, Blue -> Purple, Purple -> Gold"]=
+"เขียว → น้ำเงิน, น้ำเงิน → ม่วง, ม่วง → ทอง",
+
+["Banjo Cricket"]=
+"จิ้งหรีดแบนโจ",
+
+["Auto Banjo Cricket"]=
+"ออโต้จิ้งหรีดแบนโจ",
 
 
 -- PETS
@@ -1361,6 +1429,20 @@ local function TranslateLine(line)
         {"Golden","ทอง"},
         {"Silver","เงิน"},
 
+        -- BF V1.7.9 ENCHANTED
+        {"Auto Wisp Quests","ออโต้ทำเควสต์ Wisp"},
+        {"Steal Wisp Quest Eggs","ขโมยไข่เควสต์ Wisp"},
+        {"Auto Claim Net","ออโต้รับตาข่าย"},
+        {"Auto Catch Butterflies","ออโต้จับผีเสื้อ"},
+        {"Auto Essence","ออโต้เอสเซนส์"},
+        {"Auto Trade Up","ออโต้แลกอัปเกรด"},
+        {"Auto Banjo Cricket","ออโต้จิ้งหรีดแบนโจ"},
+
+        {"Green %-%> Blue","เขียว → น้ำเงิน"},
+        {"Blue %-%> Purple","น้ำเงิน → ม่วง"},
+        {"Purple %-%> Golden","ม่วง → ทอง"},
+        {"Purple %-%> Gold","ม่วง → ทอง"},
+
         {"Prediction is patched","ระบบคาดการณ์ถูกแก้แล้ว"},
 
         {"Legendary","เลเจนดารี"},
@@ -2175,7 +2257,7 @@ end
 --========================================================
 
 print(
-    "✅ ZIGZAG BF Translator V2.3 armed"
+    "✅ ZIGZAG BF Translator V2.4 armed"
 )
 
 
@@ -2276,7 +2358,7 @@ task.delay(
                 "SendNotification",
                 {
                     Title="🥭 BigFroot ภาษาไทย",
-                    Text="แปลไทยโดย ZIGZAG | V2.3",
+                    Text="แปลไทยโดย ZIGZAG | V2.4",
                     Duration=5
                 }
             )
@@ -2286,10 +2368,13 @@ task.delay(
 
 
 print("========================================")
-print("✅ BIGFROOT THAI - ZIGZAG V2.3 MERGED")
+print("✅ BIGFROOT THAI - ZIGZAG V2.4 MERGED")
 print("✅ WORKING V2 ENGINE")
 print("✅ BFLoader INCLUDED")
-print("✅ V2.1 + V2.2 + V2.3 TRANSLATIONS")
+print("✅ V2.3 BASE PRESERVED")
+print("✅ BF V1.7.9 ENCHANTED UPDATE")
+print("✅ WISP / BUTTERFLIES / ESSENCE")
+print("✅ TRADE UP / BANJO CRICKET")
 print("✅ AREA / DROPDOWN")
 print("✅ SETTINGS / CONFIG / THEME")
 print("✅ WEATHER / PATTERN")
