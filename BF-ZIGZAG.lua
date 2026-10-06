@@ -1,7 +1,17 @@
 --========================================================
--- BIGFROOT THAI - ZIGZAG V2.4 MERGED
--- Working V2 Engine + V2.3 + Enchanted Update
+-- BIGFROOT THAI - ZIGZAG V2.5.2 FIXED
+-- BASE: WORKING V2.5.1
 -- BF v1.7.9
+--
+-- ✅ V2.5.1 WORKING BASE PRESERVED
+-- ✅ BF Loader
+-- ✅ Thai Translator V2.4 Engine
+-- ✅ ZIGZAG Auto Theme
+-- ✅ ZIGZAG Icon + Wallpaper
+-- ✅ Auto Admin Treadmill
+-- ✅ Plot Spawn dropdown translated
+-- ✅ No RenderStepped translation
+-- ✅ No permanent full-scan loop
 --========================================================
 
 local Players=game:GetService("Players")
@@ -17,6 +27,47 @@ local BF_URL=
 local CREDIT_TEXT="✦ แปลไทยโดย ZIGZAG"
 local CREDIT_COLOR=Color3.fromRGB(255,105,220)
 local CREDIT_STROKE=Color3.fromRGB(255,220,248)
+
+
+--========================================================
+-- ZIGZAG THEME
+--========================================================
+
+local ZIGZAG_THEME_ASSET=
+    "104570286698558"
+
+local ZIGZAG_THEME_JSON=[=[
+{
+  "Theme": {
+    "Glow": false,
+    "Colors": {
+      "Panel": "0f0818",
+      "Text": "f2eaff",
+      "Element": "241331",
+      "Risky": "e65757",
+      "Outline": "7a39e6",
+      "Hover": "341252",
+      "Background": "12091d",
+      "DimText": "b89ce0",
+      "Accent": "9a4dff"
+    },
+    "Icon": "rbxassetid://104570286698558",
+    "Wallpaper": {
+      "Transparency": 0.14,
+      "Image": "rbxassetid://104570286698558"
+    },
+    "ElementGlow": true,
+    "CardOpacity": 0.9
+  },
+  "blush": 1,
+  "Name": "ZIGZAG",
+  "Kind": "theme"
+}
+]=]
+
+local ZIGZAG_THEME_APPLIED=false
+local ZIGZAG_THEME_RUNNING=false
+local ZIGZAG_THEME_IMPORT_ATTEMPTED=false
 
 
 --========================================================
@@ -143,6 +194,12 @@ local T={
 
 ["Return To"]="กลับไปยัง",
 ["Plot Spawn"]="จุดเกิดในฐาน",
+
+-- V2.5.2 FIXED - EXACT DROPDOWN MAPPINGS
+["Plot Center"]="กลางฐาน",
+["Pen Area"]="พื้นที่คอก",
+["Start Area"]="พื้นที่เริ่มต้น",
+["1st Area (no claim)"]="พื้นที่แรก (ไม่ต้องเคลม)",
 
 ["Return To Last Position"]="กลับตำแหน่งล่าสุด",
 ["Return to Last Position"]="กลับตำแหน่งล่าสุด",
@@ -332,6 +389,8 @@ local T={
 
 ["Auto Treadmill Training"]="ออโต้ฝึกลู่วิ่ง",
 ["Auto Treadmill Upgrade"]="ออโต้อัปเกรดลู่วิ่ง",
+
+["Auto Admin Treadmill"]="ออโต้ลู่วิ่งแอดมิน",
 
 ["Trails"]="Trail",
 ["Trails To Buy"]="Trail ที่ต้องการซื้อ",
@@ -962,6 +1021,510 @@ end
 
 
 --========================================================
+-- ZIGZAG THEME HELPERS
+-- ใช้ UI Import ของ BF เอง
+-- ไม่มี Loop ถาวร
+--========================================================
+
+local function IsThemeImportBox(object)
+
+    if not object
+        or not object:IsA("TextBox")
+    then
+        return false
+    end
+
+    local ok,placeholder=
+        pcall(function()
+            return object.PlaceholderText
+        end)
+
+    if not ok
+        or type(placeholder)~="string"
+    then
+        return false
+    end
+
+    local clean=
+        string.lower(
+            Clean(placeholder)
+        )
+
+    return
+        clean:find(
+            "paste a theme code",
+            1,
+            true
+        )~=nil
+        or
+        Clean(placeholder):find(
+            "วางโค้ดธีม",
+            1,
+            true
+        )~=nil
+end
+
+
+local function HasZigzagWallpaper(root)
+
+    if not root
+        or not root.Parent
+    then
+        return false
+    end
+
+    local function Check(object)
+
+        if not object:IsA("ImageLabel")
+            and not object:IsA("ImageButton")
+        then
+            return false
+        end
+
+        local ok,image=
+            pcall(function()
+                return object.Image
+            end)
+
+        return
+            ok
+            and type(image)=="string"
+            and image:find(
+                ZIGZAG_THEME_ASSET,
+                1,
+                true
+            )~=nil
+    end
+
+    if Check(root) then
+        return true
+    end
+
+    for _,object in ipairs(
+        root:GetDescendants()
+    ) do
+
+        if Check(object) then
+            return true
+        end
+    end
+
+    return false
+end
+
+
+local function GetButtonText(object)
+
+    if not object
+        or not object:IsA("TextButton")
+    then
+        return ""
+    end
+
+    local ok,text=
+        pcall(function()
+            return object.Text
+        end)
+
+    if ok
+        and type(text)=="string"
+    then
+        return Clean(text)
+    end
+
+    return ""
+end
+
+
+local function PressButton(button)
+
+    if not button
+        or not button.Parent
+    then
+        return false
+    end
+
+    if type(firesignal)=="function" then
+
+        local ok=
+            pcall(function()
+
+                firesignal(
+                    button.MouseButton1Click
+                )
+            end)
+
+        if ok then
+            return true
+        end
+    end
+
+
+    if type(getconnections)=="function" then
+
+        local ok,connections=
+            pcall(
+                getconnections,
+                button.MouseButton1Click
+            )
+
+        if ok
+            and type(connections)=="table"
+        then
+
+            local fired=false
+
+            for _,connection
+                in ipairs(connections)
+            do
+
+                pcall(function()
+
+                    if
+                        type(connection.Fire)
+                        =="function"
+                    then
+
+                        connection:Fire()
+                        fired=true
+
+                    elseif
+                        type(connection.Function)
+                        =="function"
+                    then
+
+                        connection.Function()
+                        fired=true
+                    end
+                end)
+            end
+
+            if fired then
+                return true
+            end
+        end
+    end
+
+    return false
+end
+
+
+local function IsThemeNavButton(object)
+
+    if not object:IsA("TextButton") then
+        return false
+    end
+
+    local text=
+        string.lower(
+            Clean(
+                GetButtonText(object)
+            )
+        )
+
+    return
+        text=="theming"
+        or text=="theme"
+        or text=="ธีม"
+end
+
+
+local function FindThemeNavButton(root)
+
+    for _,object in ipairs(
+        root:GetDescendants()
+    ) do
+
+        if IsThemeNavButton(object) then
+            return object
+        end
+    end
+
+    return nil
+end
+
+
+local function FindThemeImportBox(root)
+
+    if IsThemeImportBox(root) then
+        return root
+    end
+
+    for _,object in ipairs(
+        root:GetDescendants()
+    ) do
+
+        if IsThemeImportBox(object) then
+            return object
+        end
+    end
+
+    return nil
+end
+
+
+local function IsThemeImportButton(object)
+
+    if not object:IsA("TextButton") then
+        return false
+    end
+
+    local text=
+        string.lower(
+            Clean(
+                GetButtonText(object)
+            )
+        )
+
+    return
+        text=="import code"
+        or text=="import"
+        or text=="นำเข้าโค้ด"
+        or text=="นำเข้า"
+end
+
+
+local function FindThemeImportButton(
+    box,
+    root
+)
+
+    local current=
+        box.Parent
+
+    for _=1,6 do
+
+        if not current then
+            break
+        end
+
+        for _,object in ipairs(
+            current:GetDescendants()
+        ) do
+
+            if IsThemeImportButton(object) then
+                return object
+            end
+        end
+
+        if current==root then
+            break
+        end
+
+        current=
+            current.Parent
+    end
+
+
+    for _,object in ipairs(
+        root:GetDescendants()
+    ) do
+
+        if IsThemeImportButton(object) then
+            return object
+        end
+    end
+
+    return nil
+end
+
+
+local function FindZigzagButton(root)
+
+    for _,object in ipairs(
+        root:GetDescendants()
+    ) do
+
+        if object:IsA("TextButton") then
+
+            local text=
+                string.upper(
+                    Clean(
+                        GetButtonText(object)
+                    )
+                )
+
+            if text=="ZIGZAG" then
+                return object
+            end
+        end
+    end
+
+    return nil
+end
+
+
+local function TryApplyZigzagTheme(root)
+
+    if ZIGZAG_THEME_APPLIED
+        or ZIGZAG_THEME_RUNNING
+        or not root
+        or not root.Parent
+    then
+        return
+    end
+
+
+    if HasZigzagWallpaper(root) then
+
+        ZIGZAG_THEME_APPLIED=true
+
+        print(
+            "✅ ZIGZAG THEME ALREADY ACTIVE"
+        )
+
+        return
+    end
+
+
+    ZIGZAG_THEME_RUNNING=true
+
+
+    task.spawn(function()
+
+        local box=
+            FindThemeImportBox(root)
+
+
+        if not box then
+
+            local themeButton=
+                FindThemeNavButton(root)
+
+            if themeButton then
+
+                PressButton(
+                    themeButton
+                )
+
+                task.wait(0.25)
+
+                box=
+                    FindThemeImportBox(root)
+            end
+        end
+
+
+        if box
+            and not ZIGZAG_THEME_IMPORT_ATTEMPTED
+        then
+
+            ZIGZAG_THEME_IMPORT_ATTEMPTED=true
+
+
+            pcall(function()
+
+                box.Text=
+                    ZIGZAG_THEME_JSON
+            end)
+
+
+            if type(firesignal)=="function" then
+
+                pcall(function()
+
+                    firesignal(
+                        box.FocusLost,
+                        false
+                    )
+                end)
+            end
+
+
+            task.wait(0.1)
+
+
+            local importButton=
+                FindThemeImportButton(
+                    box,
+                    root
+                )
+
+
+            if importButton then
+
+                local pressed=
+                    PressButton(
+                        importButton
+                    )
+
+
+                if pressed then
+
+                    print(
+                        "✅ ZIGZAG THEME IMPORT SENT"
+                    )
+
+                else
+
+                    warn(
+                        "[ZIGZAG] พบปุ่ม Import แต่กดอัตโนมัติไม่ได้"
+                    )
+                end
+            else
+
+                warn(
+                    "[ZIGZAG] ยังไม่พบปุ่ม Import Theme"
+                )
+            end
+
+
+            task.wait(0.55)
+        end
+
+
+        if not HasZigzagWallpaper(root) then
+
+            local zigzagButton=
+                FindZigzagButton(root)
+
+            if zigzagButton then
+
+                PressButton(
+                    zigzagButton
+                )
+
+                task.wait(0.4)
+            end
+        end
+
+
+        if HasZigzagWallpaper(root) then
+
+            ZIGZAG_THEME_APPLIED=true
+
+            print(
+                "✅ ZIGZAG THEME APPLIED"
+            )
+
+
+            pcall(function()
+
+                StarterGui:SetCore(
+                    "SendNotification",
+                    {
+                        Title="💜 ZIGZAG Theme",
+                        Text="ใช้ธีม ZIGZAG อัตโนมัติแล้ว",
+                        Duration=4
+                    }
+                )
+            end)
+
+        else
+
+            print(
+                "ℹ️ ZIGZAG Theme waiting for BF Theme UI"
+            )
+        end
+
+
+        ZIGZAG_THEME_RUNNING=false
+
+    end)
+end
+
+
+--========================================================
 -- TRANSLATE ONE LINE
 --========================================================
 
@@ -1339,6 +1902,7 @@ local function TranslateLine(line)
         {"Auto Upgrade Pen","ออโต้อัปเกรดคอก"},
         {"Auto Treadmill Training","ออโต้ฝึกลู่วิ่ง"},
         {"Auto Treadmill Upgrade","ออโต้อัปเกรดลู่วิ่ง"},
+        {"Auto Admin Treadmill","ออโต้ลู่วิ่งแอดมิน"},
 
         {"Auto Buy Selected Trails","ออโต้ซื้อ Trail ที่เลือก"},
         {"Auto Buy All Cash Trails","ออโต้ซื้อ Trail ที่ใช้เงินสดทั้งหมด"},
@@ -1953,9 +2517,48 @@ local function ApplyBFRoot(root)
     AddCredit(root)
 
 
+    --====================================================
+    -- ZIGZAG AUTO THEME
+    --====================================================
+
+    task.delay(
+        0.35,
+        function()
+
+            if root
+                and root.Parent
+            then
+
+                TryApplyZigzagTheme(
+                    root
+                )
+            end
+        end
+    )
+
+
     local descendantConnection=
         root.DescendantAdded
         :Connect(function(object)
+
+            if IsThemeImportBox(object) then
+
+                task.delay(
+                    0.15,
+                    function()
+
+                        if root
+                            and root.Parent
+                        then
+
+                            TryApplyZigzagTheme(
+                                root
+                            )
+                        end
+                    end
+                )
+            end
+
 
             if not IsText(object) then
                 return
@@ -2229,6 +2832,34 @@ end
 
 
 --========================================================
+-- TRY THEME ON CLAIMED BF ROOT
+--========================================================
+
+local function TryThemeOnBF()
+
+    if ZIGZAG_THEME_APPLIED then
+        return
+    end
+
+    for root,_ in pairs(
+        ClaimedRoots
+    ) do
+
+        if root
+            and root.Parent
+        then
+
+            TryApplyZigzagTheme(
+                root
+            )
+
+            return
+        end
+    end
+end
+
+
+--========================================================
 -- REFRESH GETHUI
 --========================================================
 
@@ -2257,7 +2888,7 @@ end
 --========================================================
 
 print(
-    "✅ ZIGZAG BF Translator V2.4 armed"
+    "✅ ZIGZAG BF Translator V2.5.2 FIXED armed"
 )
 
 
@@ -2318,6 +2949,9 @@ end)
 
 --========================================================
 -- STARTUP FALLBACK
+--
+-- ตรวจเฉพาะช่วงเริ่ม
+-- ไม่มี Loop สแกนถาวร
 --========================================================
 
 task.spawn(function()
@@ -2325,21 +2959,26 @@ task.spawn(function()
     task.wait(0.5)
     RefreshHUI()
     CheckCandidates()
+    TryThemeOnBF()
 
     task.wait(1)
     RefreshHUI()
     CheckCandidates()
+    TryThemeOnBF()
 
     task.wait(2)
     RefreshHUI()
     CheckCandidates()
+    TryThemeOnBF()
 
     task.wait(3)
     RefreshHUI()
     CheckCandidates()
+    TryThemeOnBF()
 
     task.wait(4)
     CheckCandidates()
+    TryThemeOnBF()
 
 end)
 
@@ -2358,7 +2997,7 @@ task.delay(
                 "SendNotification",
                 {
                     Title="🥭 BigFroot ภาษาไทย",
-                    Text="แปลไทยโดย ZIGZAG | V2.4",
+                    Text="ZIGZAG V2.5.2 FIXED | ไทย + Theme",
                     Duration=5
                 }
             )
@@ -2367,11 +3006,15 @@ task.delay(
 )
 
 
+--========================================================
+-- CONSOLE
+--========================================================
+
 print("========================================")
-print("✅ BIGFROOT THAI - ZIGZAG V2.4 MERGED")
-print("✅ WORKING V2 ENGINE")
+print("✅ BIGFROOT THAI - ZIGZAG V2.5.2 FIXED")
+print("✅ WORKING V2.5.1 BASE PRESERVED")
+print("✅ V2.4 TRANSLATOR ENGINE PRESERVED")
 print("✅ BFLoader INCLUDED")
-print("✅ V2.3 BASE PRESERVED")
 print("✅ BF V1.7.9 ENCHANTED UPDATE")
 print("✅ WISP / BUTTERFLIES / ESSENCE")
 print("✅ TRADE UP / BANJO CRICKET")
@@ -2384,4 +3027,15 @@ print("✅ DR SCRAMBLE")
 print("✅ MULTI-LINE + RICHTEXT")
 print("✅ DYNAMIC TEXT")
 print("✅ ZIGZAG CREDIT")
+print("✅ ZIGZAG THEME EMBEDDED")
+print("✅ ICON: 104570286698558")
+print("✅ WALLPAPER: 104570286698558")
+print("✅ AUTO THEME IMPORT / APPLY")
+print("✅ AUTO ADMIN TREADMILL TRANSLATED")
+print("✅ PLOT CENTER = กลางฐาน")
+print("✅ PEN AREA = พื้นที่คอก")
+print("✅ START AREA = พื้นที่เริ่มต้น")
+print("✅ 1ST AREA = พื้นที่แรก (ไม่ต้องเคลม)")
+print("✅ NO RENDERSTEPPED TRANSLATION")
+print("✅ NO PERMANENT FULL SCAN")
 print("========================================")
